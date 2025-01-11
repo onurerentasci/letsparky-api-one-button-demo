@@ -1,22 +1,24 @@
 import axios from "axios";
 import { API_URL, EMAIL, PASSWORD, DEVICE_ID } from "../constants/constants";
 
-// Token Management
+// Stores authentication tokens for API requests
 export let tokens: {
   accessToken?: string;
   refreshToken?: string;
 } | null = null;
 
-// Error Handling
+// Handles API error responses and formats error messages
 const handleApiError = (error: any) => {
+  console.error('API Error:', error);
   if (error.response) {
     const message = error.response.data?.message || "API error occurred";
+    console.error('Error details:', message);
     return new Error(message);
   }
   return error;
 };
 
-// Login
+// Authenticates user and retrieves access tokens
 export const login = async (): Promise<void> => {
   try {
     const response = await axios.post(`${API_URL}/auth/credentials`, {
@@ -36,7 +38,7 @@ export const login = async (): Promise<void> => {
   }
 };
 
-// Refresh Tokens
+// Refreshes expired access tokens using refresh token
 export const refreshTokens = async (): Promise<void> => {
   if (!tokens?.refreshToken) {
     throw new Error("No refresh token available");
@@ -63,20 +65,20 @@ export const refreshTokens = async (): Promise<void> => {
   }
 };
 
-// Get User Devices
+// Retrieves list of devices associated with the user
 export const fetchUserDevices = async (): Promise<any[]> => {
   if (!tokens?.accessToken) {
-    throw new Error("No access token available");
+    await login();
   }
 
   try {
     const response = await axios.get(`${API_URL}/user-device`, {
-      headers: { Authorization: `Bearer ${tokens.accessToken}` },
+      headers: { Authorization: `Bearer ${tokens!.accessToken}` },
     });
 
     return response.data.payload; // User devices
   } catch (error: any) {
-    if (error?.response?.status === 401 && tokens?.refreshToken) {
+    if (error?.response?.status === 401) {
       await refreshTokens();
       return await fetchUserDevices(); // retry
     }
@@ -85,7 +87,7 @@ export const fetchUserDevices = async (): Promise<any[]> => {
   }
 };
 
-// Update the Status of a Specific Device
+// Updates device status (block/unblock) on the server
 export const updateDeviceStatus = async (currentStatus: string): Promise<void> => {
   if (!tokens?.accessToken) {
     throw new Error("No access token available");
