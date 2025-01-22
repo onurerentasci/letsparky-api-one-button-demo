@@ -10,6 +10,7 @@ import {
 } from 'react-native';
 import { fetchDeviceDetails, toggleDeviceStatus } from './src/services/DeviceActions';
 import { ToggleDevice } from './src/components/ToggleDevice';
+import { OperationalStatusGuide } from './src/components/OperationalStatusGuide';
 
 // Interface for device information structure
 interface DeviceDetails {
@@ -77,46 +78,49 @@ export default function App() {
   return (
     <SafeAreaView style={styles.safeArea}>
       <StatusBar barStyle={'default'} />
-      <View style={styles.container}>
-        {isLoading ? (
-          <ActivityIndicator size="large" color="#F8AB16" />
-        ) : error ? (
-          <Text style={styles.errorText}>{error}</Text>
-        ) : deviceDetails ? (
-          <>
-            <Text style={styles.statusText}>NickName: {deviceDetails.nickName}</Text>
-            <Text style={styles.statusText}>Status: {deviceDetails.status}</Text>
-            <Text style={styles.statusText}>
-              Battery: {deviceDetails.batteryVoltage ? `${deviceDetails.batteryVoltage / 1000}V` : 'N/A'}
-            </Text>
-            <Text style={styles.statusText}>Location: {deviceDetails.location || 'Unknown'}</Text>
-            <Text style={styles.statusText}>
-              Firmware: {deviceDetails.firmwareVersion || 'Unknown'}
-            </Text>
-            <Text style={styles.statusText}>
-              Last Connected: {deviceDetails.lastConnectionDate || 'Unknown'}
-            </Text>
-            <ToggleDevice 
-              status={deviceDetails.status} 
-              onToggle={handleToggle}
-              loading={isButtonLoading} 
-            />
-          </>
-        ) : (
-          <Text style={styles.statusText}>No device details available.</Text>
-        )}
-      </View>
-      <View style={styles.logContainer}>
-        <Text style={styles.logTitle}>Command Line Logs:</Text>
-        <ScrollView 
-          style={styles.logScroll}
-        >
-          {logMessages.map((msg, index) => (
-            <Text key={index} style={styles.logMessage}>
-              {msg}
-            </Text>
-          ))}
+      <View style={styles.mainContainer}>
+        <ScrollView style={styles.scrollContainer}>
+          <View style={styles.container}>
+            <OperationalStatusGuide />
+            {isLoading ? (
+              <ActivityIndicator size="large" color="#F8AB16" />
+            ) : error ? (
+              <Text style={styles.errorText}>{error}</Text>
+            ) : deviceDetails ? (
+              <>
+                <Text style={styles.statusText}>NickName: {deviceDetails.nickName}</Text>
+                <Text style={styles.statusText}>Status: {deviceDetails.status}</Text>
+                <Text style={styles.statusText}>
+                  Battery: {deviceDetails.batteryVoltage ? `${deviceDetails.batteryVoltage / 1000}V` : 'N/A'}
+                </Text>
+                <Text style={styles.statusText}>Location: {deviceDetails.location || 'Unknown'}</Text>
+                <Text style={styles.statusText}>
+                  Firmware: {deviceDetails.firmwareVersion || 'Unknown'}
+                </Text>
+                <Text style={styles.statusText}>
+                  Last Connected: {deviceDetails.lastConnectionDate || 'Unknown'}
+                </Text>
+                <ToggleDevice 
+                  status={deviceDetails.status} 
+                  onToggle={handleToggle}
+                  loading={isButtonLoading} 
+                />
+              </>
+            ) : (
+              <Text style={styles.statusText}>No device details available.</Text>
+            )}
+          </View>
         </ScrollView>
+        <View style={styles.logContainer}>
+          <Text style={styles.logTitle}>Command Line Logs:</Text>
+          <ScrollView style={styles.logScroll}>
+            {logMessages.map((msg, index) => (
+              <Text key={index} style={styles.logMessage}>
+                {msg}
+              </Text>
+            ))}
+          </ScrollView>
+        </View>
       </View>
     </SafeAreaView>
   );
@@ -127,10 +131,15 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#fff',
   },
-  container: {
+  mainContainer: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+    display: 'flex',
+    flexDirection: 'column',
+  },
+  scrollContainer: {
+    flex: 1,
+  },
+  container: {
     padding: 16,
   },
   statusText: {
@@ -146,8 +155,8 @@ const styles = StyleSheet.create({
     borderTopColor: '#ccc',
     padding: 10,
     backgroundColor: '#f7f7f7',
-    minHeight: 200,
     height: 200,
+    // position: 'absolute' kullanmıyoruz, flex yapısı ile çözüyoruz
   },
   logTitle: {
     fontWeight: 'bold',
