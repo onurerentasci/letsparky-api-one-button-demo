@@ -10,11 +10,16 @@ interface ToggleDeviceProps {
 
 // Button component for toggling device status with loading state
 export const ToggleDevice: React.FC<ToggleDeviceProps> = ({ status, onToggle, loading }) => {
+  const isDisabled = !['UNBLOCK', 'BLOCK'].includes(status);
+
   return (
     <TouchableOpacity 
-      style={[styles.button, loading && styles.buttonDisabled]} 
+      style={[
+        styles.button, 
+        (loading || isDisabled) && styles.buttonDisabled
+      ]} 
       onPress={onToggle}
-      disabled={loading}
+      disabled={loading || isDisabled}
     >
       {loading ? (
         <ActivityIndicator size="large" color="#fff" />
@@ -22,14 +27,23 @@ export const ToggleDevice: React.FC<ToggleDeviceProps> = ({ status, onToggle, lo
         <>
           <Image
             source={
-              status === 'BLOCKED'
+              status === 'UNBLOCK'
                 ? require('../../assets/images/console_boucner_active_down.png')
-                : require('../../assets/images/console_bouncer_active_up.png')
+                : status === 'BLOCK'
+                ? require('../../assets/images/console_bouncer_active_up.png')
+                : status === 'ONGOING_PARKING'
+                ? require('../../assets/images/console_bouncer_in_use.png')
+                : status === 'ALARM'
+                ? require('../../assets/images/console_bouncer_alarm.png')
+                : require('../../assets/images/console_bouncer_passive.png')
             }
             style={styles.image}
           />
           <Text style={styles.buttonText}>
-            {status === 'BLOCKED' ? 'Unblock Device' : 'Block Device'}
+            {status === 'UNBLOCK' ? 'Block Device' : 
+             status === 'BLOCK' ? 'Unblock Device' : 
+             status === 'ONGOING_PARKING' ? 'In Use' :
+             status === 'ALARM' ? 'Alarm' : 'Offline'}
           </Text>
         </>
       )}

@@ -8,7 +8,7 @@ import {
   ActivityIndicator,
   ScrollView,
 } from 'react-native';
-import { fetchDeviceDetails, toggleDeviceStatus } from './src/services/DeviceActions';
+import { fetchDeviceDetails, toggleDeviceStatus, initializeDeviceConnection } from './src/services/DeviceActions';
 import { ToggleDevice } from './src/components/ToggleDevice';
 import { OperationalStatusGuide } from './src/components/OperationalStatusGuide';
 
@@ -55,24 +55,46 @@ export default function App() {
     }
   };
 
-  // Initialize device details on component mount
+  // Initialize device details and connection on component mount
   useEffect(() => {
     const initialize = async () => {
       setIsLoading(true);
-      log(`[initialize] Fetching device details... - ${date.toLocaleString()}`);
+      log(`[initialize] Starting device initialization... - ${date.toLocaleString()}`);
       try {
+        // İlk bağlantıyı kur
+        await initializeDeviceConnection();
+        log(`[initialize] Initial connection established - ${date.toLocaleString()}`);
+        
+        // Device detaylarını getir
         const details = await fetchDeviceDetails();
         setDeviceDetails(details);
-        log(`[initialize] Device details fetched successfully. - ${date.toLocaleString()}`);
+        log(`[initialize] Device details fetched successfully - ${date.toLocaleString()}`);
       } catch (err) {
-        log(`[initialize] Failed to fetch device details - ${date.toLocaleString()}`);
-        setError(`Failed to fetch device details - ${date.toLocaleString()}`);
+        log(`[initialize] Failed to initialize device - ${date.toLocaleString()}`);
+        setError(`Failed to initialize device - ${date.toLocaleString()}`);
       } finally {
         setIsLoading(false);
       }
     };
 
+    // İlk başlatma
     initialize();
+
+    // Her 30 saniyede bir status güncelle
+    const intervalId = setInterval(async () => {
+      if (!isLoading && !isButtonLoading) {
+        try {
+          const details = await fetchDeviceDetails();
+          setDeviceDetails(details);
+          log(`[auto-update] Device status refreshed - ${new Date().toLocaleString()}`);
+        } catch (err) {
+          log(`[auto-update] Failed to refresh status - ${new Date().toLocaleString()}`);
+        }
+      }
+    }, 30000);
+
+    // Cleanup on unmount
+    return () => clearInterval(intervalId);
   }, []);
 
   return (
